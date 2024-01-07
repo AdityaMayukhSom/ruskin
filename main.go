@@ -10,7 +10,7 @@ import (
 
 func main() {
 	serverconf := &server.ServerConfig{
-		Port:         ":3000",
+		ListenAddr:   ":3000",
 		StoreFactory: store.NewMemoryStoreFactory(nil),
 	}
 
