@@ -1,13 +1,17 @@
 package server
 
+import (
+	store "github.com/AdityaMayukhSom/ruskin/store"
+)
+
 type ServerConfig struct {
-	port         string
-	storeFactory StoreFactory
+	Port         string
+	StoreFactory store.StoreFactory
 }
 
 type Server struct {
 	*ServerConfig
-	topics map[string]Store
+	topics map[string]store.Store
 }
 
 func NewServer(scfg *ServerConfig) (*Server, error) {
