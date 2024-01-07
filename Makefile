@@ -1,4 +1,4 @@
 run: build
-	@./bin/gstream
+	@./bin/ruskin
 build:
-	@go build -o bin/gstream
+	@go build -o bin/ruskin
