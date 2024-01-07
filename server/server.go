@@ -1,11 +1,13 @@
 package server
 
 import (
+	"net/http"
+
 	store "github.com/AdityaMayukhSom/ruskin/store"
 )
 
 type ServerConfig struct {
-	Port         string
+	ListenAddr   string
 	StoreFactory store.StoreFactory
 }
 
@@ -19,5 +21,13 @@ func NewServer(scfg *ServerConfig) (*Server, error) {
 }
 
 func (s *Server) Start() {
+	http.ListenAndServe(s.ListenAddr, nil)
+}
+
+func (s *Server) CreateTopic(name string) {
+	_, ok := s.topics[name]
+	if !ok {
+		s.topics[name] = s.StoreFactory.Produce()
+	}
 
 }
