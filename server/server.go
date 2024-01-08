@@ -123,6 +123,27 @@ func (s *Server) createStore(topicName string) (store.Store, error) {
 	return topicStore, err
 }
 
+// Returns the corresponding store
+func (s *Server) getStore(topicName string) (store.Store, error) {
+	if len(topicName) == 0 {
+		return nil, errors.New("cannot get topic store with empty name")
+	}
+
+	var topicStore store.Store
+	found, err := s.checkStore(topicName)
+	if err == nil && !found {
+		if topicStore, err = s.createStore(topicName); err != nil {
+			return nil, err
+		}
+	} else if err != nil {
+		return nil, err
+	} else if found {
+		topicStore = s.topicStores[topicName]
+	}
+
+	return topicStore, nil
+}
+
 // Publishes the message to the topic mentioned in Message.Topic field
 // If the mentioned topic does not exist, this function will create a
 // new topic and then publish the data into that topic.
