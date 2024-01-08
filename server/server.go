@@ -14,9 +14,27 @@ type ServerConfig struct {
 
 type Server struct {
 	*ServerConfig
-	topics      map[string]store.Store
-	producers   []transport.Producer
-	consumers   []transport.Consumer
+
+	// It is used when a goroutine is trying to check if a store
+	// corresponding to a topic already exists or not.
+	getStoreStateMut sync.RWMutex
+
+	// It is used in when a goroutine is willing to update topicStores.
+	changeStoreStateMut sync.Mutex
+
+	producers []transport.Producer
+	consumers []transport.Consumer
+
+	// To update topic store in a goroutine safe manner, the developer must
+	// lock the changeStoreStateMut before testing for the condition and
+	// must write lock getStoreStateMut before actually updating the state
+	// and then they must uplock them in the reverse manner.
+	topicStores map[string]store.Store
+
+	produceChannel <-chan transport.Message
+
+	// When we are willing to shutdown the server gracefully,
+	// we need to signal this channel or close it.
 	quitChannel chan struct{}
 }
 
