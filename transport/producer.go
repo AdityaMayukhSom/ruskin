@@ -28,6 +28,8 @@ func (p *HTTPProducer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *HTTPProducer) Start() error {
-	slog.Info("HTTP Transport Started at Producer", "PORT", p.listenAddr)
+	slog.Info("HTTP transport started at producer", "port", p.listenAddr)
+
+	// http.ListenAndServe is a blocking method unless there is an error
 	return http.ListenAndServe(p.listenAddr, p)
 }
