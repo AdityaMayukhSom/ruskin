@@ -63,6 +63,23 @@ func NewServer(config *ServerConfig) (*Server, error) {
 	return server, nil
 }
 
+// Returns true if a store for the topic exists, otherwise returns false.
+func (s *Server) checkStore(topicName string) (bool, error) {
+	if len(topicName) == 0 {
+		return false, errors.New("cannot check for store with empty name")
+	}
+
+	// Checks whether a topic with the name exists in the map or not.
+	// ok will be true if it exists, if it doesn't, ok will be false
+	s.getStoreStateMut.RLock()
+	_, found := s.topicStores[topicName]
+	s.getStoreStateMut.RUnlock()
+
+	// errors.New("unable to check if store exists or not")
+	return found, nil
+}
+
+
 	for _, producer := range s.producers {
 		err := producer.Start()
 		if err != nil {
