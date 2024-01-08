@@ -121,15 +121,46 @@ func (s *Server) createStore(topicName string) (store.Store, error) {
 }
 
 
+// Registers producers and consumers associated with the server and
+// starts publishing messages to topics.
+func (s *Server) Start() error {
+	// for _, consumer := range s.consumers {
+	// 	go func(c transport.Consumer) {
+	// 		err := c.Start()
+	// 		if err != nil {
+	// 			// if one consumer is failing, doesn't mean whole
+	// 			// server has to be stopped, so print and move on
+	// 			fmt.Println(err)
+	// 		}
+	// 	}(consumer)
+	// }
+
 	for _, producer := range s.producers {
-		err := producer.Start()
-		if err != nil {
-			// if one producer is failing, doesn't mean whole
-			// server has to be stopped, so print and move on
-			fmt.Println(err)
-		}
+		go func(p transport.Producer) {
+			err := p.Start()
+			if err != nil {
+				// if one producer is failing, doesn't mean whole
+				// server has to be stopped, so print and move on
+				fmt.Println(err)
+			}
+		}(producer)
 	}
 
-	<-s.quitChannel
-	return nil
+	for {
+		select {
+		case <-s.quitChannel:
+			return nil
+		case message := <-s.produceChannel:
+			go func(s *Server, m transport.Message) {
+				offset, err := s.publishMessage(m)
+				if err != nil {
+					slog.Error("could not publish message=%s to topic=%s",
+						m.Topic, string(m.Data))
+					return
+				}
+				slog.Info("produced", "message", m, "offset", offset)
+
+			}(s, message)
+		}
+	}
 }
