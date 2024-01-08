@@ -13,6 +13,7 @@ type ServerConfig struct {
 }
 
 type Server struct {
+	// We must use two mutex to synchronise the creation of new topic store.
 	*ServerConfig
 
 	// It is used when a goroutine is trying to check if a store
