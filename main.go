@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	server "github.com/AdityaMayukhSom/ruskin/server"
@@ -18,5 +17,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(server)
+
+	err = server.Start()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
