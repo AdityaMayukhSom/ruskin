@@ -1,8 +1,10 @@
 package transport
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 )
 
 type Producer interface {
@@ -10,12 +12,16 @@ type Producer interface {
 }
 
 type HTTPProducer struct {
-	listenAddr string
+	listenAddr     string
+	produceChannel chan<- Message
 }
 
-func NewHTTPProducer(listenAddr string) *HTTPProducer {
+func NewHTTPProducer(
+	listenAddr string, produceChannel chan<- Message,
+) *HTTPProducer {
 	return &HTTPProducer{
-		listenAddr: listenAddr,
+		listenAddr:     listenAddr,
+		produceChannel: produceChannel,
 	}
 }
 
