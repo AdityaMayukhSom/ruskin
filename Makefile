@@ -12,3 +12,7 @@ run: build
 clean:
 	@echo "Removing Ruskin executable"
 	rm -fr $(OUTPUT_FILE)
+
+rebuild: clean build
+
+cleanrun: clean run
