@@ -20,11 +20,40 @@ func NewHTTPProducer(listenAddr string) *HTTPProducer {
 }
 
 // Implementing Handler interface.
-//
 // Refer to [net/http.Handler] interface.
 func (p *HTTPProducer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	slog.Info("Handling Request for Producer", "PATH", r.URL.Path)
-	w.Write([]byte("hello world"))
+	path := strings.TrimPrefix(r.URL.Path, "/")
+	parts := strings.Split(path, "/")
+
+	switch r.Method {
+	case http.MethodGet:
+	case http.MethodPost:
+		if len(parts) != 2 {
+			slog.Error("invalid route param count", "passed", len(parts))
+		}
+
+		protoName, topicName := parts[0], parts[1]
+		switch protoName {
+		case "publish":
+			slog.Info("publishing", "topic", topicName)
+			p.produceChannel <- Message{
+				Topic: topicName,
+				Data:  []byte("we don't know yet"),
+			}
+		default:
+			w.WriteHeader(400)
+			notSupportedErrMsg := fmt.Sprintf(
+				"route %s not supported", protoName)
+			w.Write([]byte(notSupportedErrMsg))
+		}
+
+		w.Write([]byte("message published"))
+
+	case http.MethodDelete:
+
+	default:
+		w.WriteHeader(405)
+	}
 }
 
 func (p *HTTPProducer) Start() error {
