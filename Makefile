@@ -1,4 +1,14 @@
-run: build
-	@./bin/ruskin
+# BUILD_FLAGS = 
+OUTPUT_FILE := ./bin/ruskin
+
 build:
-	@go build -o bin/ruskin
+	@echo "Building the source files"
+	go build -o $(OUTPUT_FILE)
+
+run: build
+	@echo "Starting Ruskin"
+	$(OUTPUT_FILE)
+
+clean:
+	@echo "Removing Ruskin executable"
+	rm -fr $(OUTPUT_FILE)
