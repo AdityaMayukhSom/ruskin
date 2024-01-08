@@ -79,6 +79,47 @@ func (s *Server) checkStore(topicName string) (bool, error) {
 	return found, nil
 }
 
+// Creates a new topic if the topic does not already exists.
+// Returns true if topic is successfully created, otherwise returns false.
+func (s *Server) createStore(topicName string) (store.Store, error) {
+	if len(topicName) == 0 {
+		return nil, errors.New("cannot create topic store with empty name")
+	}
+
+	var topicStore store.Store
+
+	// As we may require to modify the state of topicStores, we first lock
+	// the changeStoreStateMut variable. Now no other function shall be able
+	// to modify the state of topicStores (considering createStore is the
+	// only way to modify topicStores)
+	s.changeStoreStateMut.Lock()
+
+	found, err := s.checkStore(topicName)
+	if err == nil && !found {
+		// err is nil here
+		topicStore = s.StoreFactory.Produce()
+
+		// we need to modify the state of the store
+		// hence stop read access to check store
+		s.getStoreStateMut.Lock()
+
+		// add the newly generated store for the given topic
+		s.topicStores[topicName] = topicStore
+
+		s.getStoreStateMut.Unlock()
+		slog.Info("created store", "topic", topicName)
+	} else if err != nil {
+		topicStore = nil
+	} else if found {
+		// err is nil here too
+		topicStore = s.topicStores[topicName]
+	}
+
+	s.changeStoreStateMut.Unlock()
+
+	return topicStore, err
+}
+
 
 	for _, producer := range s.producers {
 		err := producer.Start()
