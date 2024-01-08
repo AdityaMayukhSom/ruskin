@@ -40,37 +40,28 @@ type Server struct {
 }
 
 func NewServer(config *ServerConfig) (*Server, error) {
-	return &Server{
+	// a channel shared between producers and the server
+	// where producers push messages and server adds the message into
+	// their respective topic stores
+	var produceChannel = make(chan transport.Message)
+
+	server := &Server{
 		ServerConfig: config,
 		producers: []transport.Producer{
 			transport.NewHTTPProducer(
 				config.ListenAddr,
+				produceChannel,
 			),
 		},
-		topics:      make(map[string]store.Store),
-		quitChannel: make(chan struct{}),
-	}, nil
-}
+		consumers:   []transport.Consumer{},
+		topicStores: make(map[string]store.Store),
 
-func (s *Server) CreateTopic(name string) bool {
-	_, ok := s.topics[name]
-	if !ok {
-		s.topics[name] = s.StoreFactory.Produce()
-		return true
+		produceChannel: produceChannel,
+		quitChannel:    make(chan struct{}),
 	}
-	return false
+
+	return server, nil
 }
-
-func (s *Server) Start() error {
-
-	for _, consumer := range s.consumers {
-		err := consumer.Start()
-		if err != nil {
-			// if one consumer is failing, doesn't mean whole
-			// server has to be stopped, so print and move on
-			fmt.Println(err)
-		}
-	}
 
 	for _, producer := range s.producers {
 		err := producer.Start()
