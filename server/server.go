@@ -144,11 +144,14 @@ func (s *Server) getStore(topicName string) (store.Store, error) {
 	return topicStore, nil
 }
 
-// Publishes the message to the topic mentioned in Message.Topic field
+// Publishes the message to the topic mentioned in `Message.Topic` field.
+//
 // If the mentioned topic does not exist, this function will create a
 // new topic and then publish the data into that topic.
-// returns offset of the message in the topic store as first value
-// returns an error if the topic name is empty string or unable
+//
+// Returns the offset of the message inside the topic store as first value.
+//
+// Returns an error if the topic name is empty string or unable
 // to insert data into the topic store. If an error is thrown then
 // offset value returned is -1.
 func (s *Server) publishMessage(message transport.Message) (int, error) {
