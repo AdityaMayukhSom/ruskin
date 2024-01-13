@@ -8,5 +8,5 @@ type Message struct {
 }
 
 func (m Message) String() string {
-	return fmt.Sprintf("(topic :: %s, data :: %s)", m.Topic, string(m.Data))
+	return fmt.Sprintf("{Topic: %s,Data: %s}", m.Topic, string(m.Data))
 }
