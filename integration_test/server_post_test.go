@@ -4,14 +4,12 @@ package integratio_test
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
 	"testing"
-
-	transport "github.com/AdityaMayukhSom/ruskin/transport"
 )
 
 func TestPublishOverConnection(t *testing.T) {
@@ -46,14 +44,15 @@ func TestPublishOverConnection(t *testing.T) {
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		defer resp.Body.Close()
 
-		var responseBody transport.TransportResponse
-		err = json.NewDecoder(resp.Body).Decode(&responseBody)
+		bodyBytes, err := io.ReadAll(resp.Body)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Println(responseBody)
+		bodyString := string(bodyBytes)
+		fmt.Println(bodyString)
 	}
 }
