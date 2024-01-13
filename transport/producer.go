@@ -2,6 +2,7 @@ package transport
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -35,26 +36,42 @@ func (p *HTTPProducer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 	case http.MethodPost:
 		if len(parts) != 2 {
-			slog.Error("invalid route param count", "passed", len(parts))
+			errMsg := fmt.Sprintf(
+				"invalid route param count : passed %d",
+				len(parts),
+			)
+
+			slog.Error(errMsg)
+			writeResponse(w, http.StatusBadRequest, errMsg)
+			return
 		}
 
 		protoName, topicName := parts[0], parts[1]
 		switch protoName {
 		case "publish":
-			slog.Info("publishing", "topic", topicName)
+			data, err := io.ReadAll(r.Body)
+
+			if err != nil {
+				errMsg := "could not read request body for data to be published"
+
+				slog.Error(errMsg)
+				writeResponse(w, http.StatusBadRequest, errMsg)
+				return
+			}
+
+			slog.Info("publishing under", "topic", topicName)
+
 			p.produceChannel <- Message{
 				Topic: topicName,
-				Data:  []byte("we don't know yet"),
+				Data:  data,
 			}
+
+			writeResponse(w, http.StatusBadRequest, "message published")
+
 		default:
-			w.WriteHeader(400)
-			notSupportedErrMsg := fmt.Sprintf(
-				"route %s not supported", protoName)
-			w.Write([]byte(notSupportedErrMsg))
+			errMsg := fmt.Sprintf("route %s not supported", protoName)
+			writeResponse(w, http.StatusBadRequest, errMsg)
 		}
-
-		w.Write([]byte("message published"))
-
 	case http.MethodDelete:
 
 	default:
