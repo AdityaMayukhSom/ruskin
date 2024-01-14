@@ -27,7 +27,8 @@ func main() {
 	slog.SetDefault(tintLogger)
 
 	serverconf := &server.ServerConfig{
-		ListenAddr:   ":3000",
+		ProducerAddr: ":3000",
+		ConsumerAddr: ":4000",
 		StoreFactory: store.NewMemoryStoreFactory(nil),
 	}
 

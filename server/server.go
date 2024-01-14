@@ -11,7 +11,8 @@ import (
 )
 
 type ServerConfig struct {
-	ListenAddr   string
+	ProducerAddr string
+	ConsumerAddr string
 	StoreFactory store.StoreFactory
 }
 
@@ -50,17 +51,23 @@ func NewServer(config *ServerConfig) (*Server, error) {
 
 	server := &Server{
 		ServerConfig: config,
+		topicStores:  make(map[string]store.Store),
+
 		producers: []transport.Producer{
 			transport.NewHTTPProducer(
-				config.ListenAddr,
+				config.ProducerAddr,
 				produceChannel,
 			),
 		},
-		consumers:   []transport.Consumer{},
-		topicStores: make(map[string]store.Store),
-
 		produceChannel: produceChannel,
-		quitChannel:    make(chan struct{}),
+
+		consumers: []transport.Consumer{
+			transport.NewWSConsumer(
+				config.ConsumerAddr,
+			),
+		},
+
+		quitChannel: make(chan struct{}),
 	}
 
 	return server, nil
@@ -173,16 +180,16 @@ func (s *Server) publishMessage(message transport.Message) (int, error) {
 // Registers producers and consumers associated with the server and
 // starts publishing messages to topics.
 func (s *Server) Start() error {
-	// for _, consumer := range s.consumers {
-	// 	go func(c transport.Consumer) {
-	// 		err := c.Start()
-	// 		if err != nil {
-	// 			// if one consumer is failing, doesn't mean whole
-	// 			// server has to be stopped, so print and move on
-	// 			fmt.Println(err)
-	// 		}
-	// 	}(consumer)
-	// }
+	for _, consumer := range s.consumers {
+		go func(c transport.Consumer) {
+			err := c.Start()
+			if err != nil {
+				// if one consumer is failing, doesn't mean whole
+				// server has to be stopped, so print and move on
+				fmt.Println(err)
+			}
+		}(consumer)
+	}
 
 	for _, producer := range s.producers {
 		go func(p transport.Producer) {
