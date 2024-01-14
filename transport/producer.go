@@ -17,9 +17,7 @@ type HTTPProducer struct {
 	produceChannel chan<- Message
 }
 
-func NewHTTPProducer(
-	listenAddr string, produceChannel chan<- Message,
-) *HTTPProducer {
+func NewHTTPProducer(listenAddr string, produceChannel chan<- Message) *HTTPProducer {
 	return &HTTPProducer{
 		listenAddr:     listenAddr,
 		produceChannel: produceChannel,
@@ -107,7 +105,7 @@ func (p *HTTPProducer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *HTTPProducer) Start() error {
-	slog.Info("HTTP transport started at producer", "port", p.listenAddr)
+	slog.Info("http producer started", "port", p.listenAddr)
 
 	// http.ListenAndServe is a blocking method unless there is an error
 	return http.ListenAndServe(p.listenAddr, p)
