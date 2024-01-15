@@ -14,9 +14,9 @@ import (
 )
 
 func TestPublishOverConnection(t *testing.T) {
-	SERVER_PORT := 3000
-	ROUTE_NAME := "/publish"
-	MIME_TYPE := "application/octet-stream"
+	const SERVER_PORT = 3000
+	const ROUTE_NAME = "/publish"
+	const MIME_TYPE = "application/octet-stream"
 	BASE_URL := fmt.Sprintf("http://localhost:%d%s", SERVER_PORT, ROUTE_NAME)
 
 	topics := []string{
