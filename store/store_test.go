@@ -6,7 +6,7 @@ import (
 )
 
 func TestMemoryStore(t *testing.T) {
-	s := NewMemoryStore()
+	s := NewMemoryStore("mytopic")
 	cnt := 10
 	for idx := 0; idx < cnt; idx++ {
 		key := fmt.Sprintf("foobarbaz_%d", idx)

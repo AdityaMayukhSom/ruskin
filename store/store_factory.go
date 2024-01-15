@@ -4,7 +4,7 @@ type StoreConfig struct {
 }
 
 type StoreFactory interface {
-	Produce() Store
+	Produce(string) Store
 }
 
 type MemoryStoreFactory struct {
@@ -17,6 +17,6 @@ func NewMemoryStoreFactory(storeConfig *StoreConfig) *MemoryStoreFactory {
 	}
 }
 
-func (m *MemoryStoreFactory) Produce() Store {
-	return NewMemoryStore()
+func (m *MemoryStoreFactory) Produce(topicName string) Store {
+	return NewMemoryStore(topicName)
 }

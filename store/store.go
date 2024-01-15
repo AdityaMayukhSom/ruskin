@@ -11,13 +11,15 @@ type Store interface {
 }
 
 type MemoryStore struct {
-	mut  sync.RWMutex
-	data [][]byte
+	mut       sync.RWMutex
+	topicName string
+	data      [][]byte
 }
 
-func NewMemoryStore() *MemoryStore {
+func NewMemoryStore(topicName string) *MemoryStore {
 	return &MemoryStore{
-		data: make([][]byte, 0),
+		data:      make([][]byte, 0),
+		topicName: topicName,
 	}
 }
 
