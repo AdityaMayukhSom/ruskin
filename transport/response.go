@@ -36,7 +36,7 @@ func (er ErrorResponse) String() string {
 	return fmt.Sprintf("{\"Message\": %s}", er.Message)
 }
 
-func writeResponse[T fmt.Stringer](w http.ResponseWriter, statusCode int, responseBody *T) {
+func WriteResponse[T fmt.Stringer](w http.ResponseWriter, statusCode int, responseBody *T) {
 	// you need to set headers before setting WriteHeader with status code
 	// refer to https://stackoverflow.com/questions/39273490/adding-a-header-to-a-responsewriter
 	w.Header().Set("Content-Type", "application/json")
