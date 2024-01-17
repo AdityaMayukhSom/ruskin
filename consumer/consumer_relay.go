@@ -17,13 +17,17 @@ type WSConsumerRelay struct {
 	clients map[*websocket.Conn]bool
 
 	// Inbound messages from the clients.
-	broadcast chan []byte
+	// broadcast chan []byte
 
 	// Register requests from the clients.
-	register chan *Consumer
+	// register chan *Consumer
 
 	// Unregister requests from clients.
-	unregister chan *Consumer
+	// unregister chan *Consumer
+}
+
+func NewWSConsumerRelay() *WSConsumerRelay {
+	return &WSConsumerRelay{}
 }
 
 func (wscr *WSConsumerRelay) Relay() error {
