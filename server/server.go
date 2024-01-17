@@ -27,8 +27,9 @@ type Server struct {
 	// It is used in when a goroutine is willing to update topicStores.
 	changeStoreStateMut sync.Mutex
 
-	producers []transport.Producer
-	consumers []transport.Consumer
+	producerHandlers     []transport.ProducerHandler
+	subscriptionHandlers []transport.SubscriptionHandler
+	streamProcessors     []transport.StreamProcessor
 
 	// To update topic store in a goroutine safe manner, the developer must
 	// lock the changeStoreStateMut before testing for the condition and
@@ -37,6 +38,10 @@ type Server struct {
 	topicStores map[string]store.Store
 
 	produceChannel <-chan transport.Message
+
+	// consumeChannel will be used to push the topicname to the client handler
+	// for spawning appropriate client relay
+	consumeChannel chan<- *store.Store
 
 	// When we are willing to shutdown the server gracefully,
 	// we need to signal this channel or close it.
@@ -53,19 +58,19 @@ func NewServer(config *ServerConfig) (*Server, error) {
 		ServerConfig: config,
 		topicStores:  make(map[string]store.Store),
 
-		producers: []transport.Producer{
-			transport.NewHTTPProducer(
+		producerHandlers: []transport.ProducerHandler{
+			transport.NewHTTPProducerHandler(
 				config.ProducerAddr,
 				produceChannel,
 			),
 		},
 		produceChannel: produceChannel,
 
-		consumers: []transport.Consumer{
-			transport.NewWSConsumer(
-				config.ConsumerAddr,
-			),
-		},
+		// consumers: []transport.Consumer{
+		// 	transport.NewWSConsumer(
+		// 		config.ConsumerAddr,
+		// 	),
+		// },
 
 		quitChannel: make(chan struct{}),
 	}
@@ -107,7 +112,7 @@ func (s *Server) createStore(topicName string) (store.Store, error) {
 	found, err := s.checkStore(topicName)
 	if err == nil && !found {
 		// err is nil here
-		topicStore = s.StoreFactory.Produce()
+		topicStore = s.StoreFactory.Produce(topicName)
 
 		// we need to modify the state of the store
 		// hence stop read access to check store
@@ -177,29 +182,45 @@ func (s *Server) publishMessage(message transport.Message) (int, error) {
 	return offset, nil
 }
 
+func (s *Server) notifySubscribers(topicName string) error {
+
+	return nil
+}
+
 // Registers producers and consumers associated with the server and
 // starts publishing messages to topics.
 func (s *Server) Start() error {
-	for _, producer := range s.producers {
-		go func(p transport.Producer) {
-			err := p.Start()
+	for _, producerHandler := range s.producerHandlers {
+		go func(ph transport.ProducerHandler) {
+			err := ph.Start()
 			if err != nil {
 				// if one producer is failing, doesn't mean whole
 				// server has to be stopped, so print and move on
 				fmt.Println(err)
 			}
-		}(producer)
+		}(producerHandler)
 	}
 
-	for _, consumer := range s.consumers {
-		go func(c transport.Consumer) {
-			err := c.Start()
+	for _, subscriptionHandler := range s.subscriptionHandlers {
+		go func(sh transport.SubscriptionHandler) {
+			err := sh.Start()
 			if err != nil {
 				// if one consumer is failing, doesn't mean whole
 				// server has to be stopped, so print and move on
 				fmt.Println(err)
 			}
-		}(consumer)
+		}(subscriptionHandler)
+	}
+
+	for _, streamProcessor := range s.streamProcessors {
+		go func(sp transport.StreamProcessor) {
+			err := sp.Start()
+			if err != nil {
+				// if one consumer is failing, doesn't mean whole
+				// server has to be stopped, so print and move on
+				fmt.Println(err)
+			}
+		}(streamProcessor)
 	}
 
 	for {
@@ -215,7 +236,6 @@ func (s *Server) Start() error {
 					return
 				}
 				slog.Info("produced", "message", m, "offset", offset)
-
 			}(s, message)
 		}
 	}
