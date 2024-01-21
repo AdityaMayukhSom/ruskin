@@ -1,7 +1,7 @@
 package consumer
 
 import (
-	store "github.com/AdityaMayukhSom/ruskin/store"
+	messagequeue "github.com/AdityaMayukhSom/ruskin/messagequeue"
 
 	"github.com/gorilla/websocket"
 )
@@ -11,7 +11,7 @@ type ConsumerRelay interface {
 }
 
 type WSConsumerRelay struct {
-	topicStore *store.Store
+	topicStore *messagequeue.Store
 
 	// Registered clients.
 	clients map[*websocket.Conn]bool

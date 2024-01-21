@@ -1,4 +1,4 @@
-package store
+package messagequeue
 
 type StoreConfig struct {
 }
