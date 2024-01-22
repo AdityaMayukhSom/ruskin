@@ -30,7 +30,6 @@ func (lp *LoadPartition) HandleSubscription(conn *websocket.Conn, topics []strin
 }
 
 func (lp *LoadPartition) Start() {
-
 	for {
 		select {
 		case topicName := <-lp.topicChannel:
@@ -39,5 +38,4 @@ func (lp *LoadPartition) Start() {
 			lp.HandleSubscription(consumer.Conn, consumer.Topics)
 		}
 	}
-
 }
