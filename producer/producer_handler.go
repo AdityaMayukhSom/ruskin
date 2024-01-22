@@ -1,4 +1,4 @@
-package transport
+package producer
 
 import (
 	"fmt"
@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+
+	"github.com/AdityaMayukhSom/ruskin/transport"
 )
 
 type ProducerHandler interface {
@@ -14,10 +16,10 @@ type ProducerHandler interface {
 
 type HTTPProducerHandler struct {
 	listenAddr     string
-	produceChannel chan<- Message
+	produceChannel chan<- transport.Message
 }
 
-func NewHTTPProducerHandler(listenAddr string, produceChannel chan<- Message) *HTTPProducerHandler {
+func NewHTTPProducerHandler(listenAddr string, produceChannel chan<- transport.Message) *HTTPProducerHandler {
 	return &HTTPProducerHandler{
 		listenAddr:     listenAddr,
 		produceChannel: produceChannel,
@@ -62,7 +64,7 @@ func (p *HTTPProducerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 			slog.Info("publishing under", "topic", topicName)
 
-			p.produceChannel <- Message{
+			p.produceChannel <- transport.Message{
 				Topic: topicName,
 				Data:  data,
 			}
