@@ -29,9 +29,9 @@ type WSConsumerRelay struct {
 	unregister chan *Consumer
 }
 
-func NewWSConsumerRelay() *WSConsumerRelay {
+func NewWSConsumerRelay(topicStore *messagequeue.Store) *WSConsumerRelay {
 	return &WSConsumerRelay{
-		topicStore: &messagequeue.Store,
+		topicStore: topicStore,
 		clients:    map[*websocket.Conn]bool{},
 		broadcast:  make(chan []byte),
 		register:   make(chan *Consumer),
