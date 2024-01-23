@@ -18,16 +18,25 @@ type WSConsumerRelay struct {
 
 	// Inbound messages from the clients.
 	// broadcast chan []byte
+	broadcast chan []byte
 
 	// Register requests from the clients.
 	// register chan *Consumer
+	register chan *Consumer
 
 	// Unregister requests from clients.
 	// unregister chan *Consumer
+	unregister chan *Consumer
 }
 
 func NewWSConsumerRelay() *WSConsumerRelay {
-	return &WSConsumerRelay{}
+	return &WSConsumerRelay{
+		topicStore: &messagequeue.Store,
+		clients:    map[*websocket.Conn]bool{},
+		broadcast:  make(chan []byte),
+		register:   make(chan *Consumer),
+		unregister: make(chan *Consumer),
+	}
 }
 
 func (wscr *WSConsumerRelay) Relay() error {
