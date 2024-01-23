@@ -1,4 +1,4 @@
-package replica
+package load
 
 type LoadDistributor struct {
 	PartitionsCount int

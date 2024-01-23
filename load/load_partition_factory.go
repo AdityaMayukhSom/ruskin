@@ -1,4 +1,4 @@
-package replica
+package load
 
 import "github.com/AdityaMayukhSom/ruskin/consumer"
 
