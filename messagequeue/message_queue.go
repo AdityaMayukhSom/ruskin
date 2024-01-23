@@ -9,12 +9,9 @@ import (
 	transport "github.com/AdityaMayukhSom/ruskin/transport"
 )
 
-type MessageQueueConfig struct {
-	// Factory to produce new stores
-	factory StoreFactory
-}
-
 type MessageQueue struct {
+	*MessageQueueConfig
+
 	// It is used to create stores for a corresponding topic on demand.
 	storeFactory StoreFactory
 
@@ -36,8 +33,9 @@ type MessageQueue struct {
 
 func NewMessageQueue(config *MessageQueueConfig) (*MessageQueue, error) {
 	mq := &MessageQueue{
-		storeFactory: config.factory,
-		topicStores:  make(map[string]Store),
+		MessageQueueConfig: config,
+		storeFactory:       config.factory,
+		topicStores:        make(map[string]Store),
 	}
 
 	return mq, nil
@@ -174,4 +172,15 @@ func (mq *MessageQueue) PublishMessage(message transport.Message) (int, error) {
 	}
 
 	return offset, nil
+}
+
+// Returns a boolean indicating whether the message queue is
+// completely filled or not.
+func (mq *MessageQueue) IsFull() bool {
+	mq.getStoreStateMut.Lock()
+	defer mq.getStoreStateMut.Unlock()
+
+	topicsCount := len(mq.topicStores)
+
+	return topicsCount == mq.topicThreshold
 }
