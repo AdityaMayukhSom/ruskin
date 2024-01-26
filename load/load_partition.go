@@ -8,7 +8,8 @@ import (
 type LoadPartition struct {
 	/*
 		Whenever a new message is generated in a topic, that topic is pushed to this
-		channel so th
+		channel so that LoadPartition can take appropriate actions and invoke the
+		consumer relay to relay that message to the connected consumers.
 
 		TODO: we need some kind of interface named `TopicIdentifier` which
 		can be used to identify topics over a cluster of computers and then
@@ -27,7 +28,7 @@ type LoadPartition struct {
 		topic    *messagequeue.Store
 	}
 
-	// A map to
+	// A map to store the in which relay the consumer exists.
 	relays map[*messagequeue.Store]consumer.ConsumerRelay
 }
 
