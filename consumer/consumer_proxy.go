@@ -30,7 +30,7 @@ func (wscp *WSConsumerProxy) socketHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (wscp *WSConsumerProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
+	go wscp.socketHandler(w, r)
 }
 
 func (wscp *WSConsumerProxy) Start() error {
