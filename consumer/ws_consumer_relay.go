@@ -1,15 +1,13 @@
 package consumer
 
 import (
-	messagequeue "github.com/AdityaMayukhSom/ruskin/messagequeue"
-
-	websocket "github.com/gorilla/websocket"
-
+	src "github.com/AdityaMayukhSom/ruskin/connector/store_relay"
 	mapset "github.com/deckarep/golang-set/v2"
+	websocket "github.com/gorilla/websocket"
 )
 
 type WSConsumerRelay struct {
-	topicStore *messagequeue.Store
+	storeConnector src.StoreConnector
 
 	// Registered clients, we will use a threadsafe Set implementation.
 	clients mapset.Set[*websocket.Conn]
@@ -27,13 +25,13 @@ type WSConsumerRelay struct {
 	unregister chan *Consumer
 }
 
-func NewWSConsumerRelay(topicStore *messagequeue.Store) *WSConsumerRelay {
+func NewWSConsumerRelay(storeConnector src.StoreConnector) *WSConsumerRelay {
 	return &WSConsumerRelay{
-		topicStore: topicStore,
-		clients:    mapset.NewSet[*websocket.Conn](),
-		broadcast:  make(chan []byte),
-		register:   make(chan *Consumer),
-		unregister: make(chan *Consumer),
+		storeConnector: storeConnector,
+		clients:        mapset.NewSet[*websocket.Conn](),
+		broadcast:      make(chan []byte),
+		register:       make(chan *Consumer),
+		unregister:     make(chan *Consumer),
 	}
 }
 
@@ -48,7 +46,7 @@ func (wscr *WSConsumerRelay) Relay() error {
 	// this should relay messages to all the connected consumers
 	// before that consume message from
 
-	msg, err := (*wscr.topicStore).Extract(10)
+	msg, err := wscr.storeConnector.FetchLatest()
 	if err != nil {
 		return err
 	}
