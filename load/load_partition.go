@@ -1,6 +1,7 @@
 package load
 
 import (
+	src "github.com/AdityaMayukhSom/ruskin/connector/store_relay"
 	consumer "github.com/AdityaMayukhSom/ruskin/consumer"
 	messagequeue "github.com/AdityaMayukhSom/ruskin/messagequeue"
 )
@@ -21,34 +22,37 @@ type LoadPartition struct {
 		establish connection both over the nerwork and via pointer if same address
 		space is used (can be either logically same or physically same)
 	*/
-	topicChannel <-chan *messagequeue.Store
+	topicChannel <-chan messagequeue.TopicIdentifier
 
 	connnectionChannel <-chan struct {
-		consumer *consumer.Consumer
-		topic    *messagequeue.Store
+		consumer consumer.Consumer
+		topic    messagequeue.TopicIdentifier
 	}
 
 	// A map to store the in which relay the consumer exists.
-	relays map[*messagequeue.Store]consumer.ConsumerRelay
+	relays map[messagequeue.TopicIdentifier]consumer.ConsumerRelay
 }
 
-func (lp *LoadPartition) ProcessStream(topicName *messagequeue.Store) {
-	consumerRelay := lp.relays[topicName]
+func (lp *LoadPartition) ProcessStream(topic messagequeue.TopicIdentifier) {
+	consumerRelay := lp.relays[topic]
 	// relay over connection can take time, but need to consider if sending the message
 	// actually takes some time, because we aren't waiting for the reply, we are only
 	// publishing the message to the client
 	go consumerRelay.Relay()
 }
 
-func (lp *LoadPartition) HandleSubscription(cnsmr *consumer.Consumer, topic *messagequeue.Store) {
+func (lp *LoadPartition) HandleSubscription(cnsmr consumer.Consumer, topic messagequeue.TopicIdentifier) {
 	relay, found := lp.relays[topic]
 	if !found {
-		relay = consumer.NewWSConsumerRelay(topic)
+		// TODO: create the topic in message queue and then get the pointer to that newly created topic
+		storeRelayConnector := src.NewPointerStoreConnector(nil)
+
+		relay = consumer.NewWSConsumerRelay(storeRelayConnector)
 		// TODO: no idea if we need to use mutex for synchronization
 		lp.relays[topic] = relay
 	}
 	// addition of that consumer can be done in another go routine
-	go relay.AddConsumer(cnsmr)
+	go relay.AddConsumer(&cnsmr)
 }
 
 func (lp *LoadPartition) Start() {
