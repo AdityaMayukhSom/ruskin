@@ -1,4 +1,4 @@
-package connector
+package store_relay_connector
 
 import (
 	"github.com/AdityaMayukhSom/ruskin/messagequeue"
@@ -8,8 +8,10 @@ type PointerStoreConnector struct {
 	storeAddr *messagequeue.Store
 }
 
-func NewPointerStoreConnector() {
-
+func NewPointerStoreConnector(topicStoreAddr *messagequeue.Store) *PointerStoreConnector {
+	return &PointerStoreConnector{
+		storeAddr: topicStoreAddr,
+	}
 }
 
 func (pc *PointerStoreConnector) Fetch(offset int) ([]byte, error) {
@@ -18,7 +20,7 @@ func (pc *PointerStoreConnector) Fetch(offset int) ([]byte, error) {
 }
 
 // Fetches all the data starting from the beginning.
-func (pc *PointerStoreConnector) FetchAll(offset int) ([][]byte, error) {
+func (pc *PointerStoreConnector) FetchAll() ([][]byte, error) {
 	return nil, nil
 }
 

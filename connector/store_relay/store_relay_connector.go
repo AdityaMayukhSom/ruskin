@@ -1,4 +1,4 @@
-package connector
+package store_relay_connector
 
 /*
 This interface acts as a bridge between some component and a store, where
@@ -9,4 +9,7 @@ type StoreConnector interface {
 	Fetch(int) ([]byte, error)
 	FetchAll() ([][]byte, error)
 	FetchLatest() ([]byte, error)
+}
+
+type RelayConnector interface {
 }
