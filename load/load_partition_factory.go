@@ -1,6 +1,9 @@
 package load
 
-import "github.com/AdityaMayukhSom/ruskin/consumer"
+import (
+	"github.com/AdityaMayukhSom/ruskin/consumer"
+	messagequeue "github.com/AdityaMayukhSom/ruskin/messagequeue"
+)
 
 type LoadPartitionFactoryConfig struct {
 }
@@ -32,8 +35,11 @@ func (lpf *LoadPartitionFactory) Produce(
 	// LoadPartitionFactories[pkgName] = f
 
 	return &LoadPartition{
-		topicChannel:    topicChannel,
-		consumerChannel: consumerChannel,
-		relays:          make(map[string]consumer.ConsumerRelay),
+		topicChannel: make(<-chan messagequeue.TopicIdentifier),
+		connnectionChannel: make(<-chan struct {
+			consumer consumer.Consumer
+			topic    messagequeue.TopicIdentifier
+		}),
+		relays: make(map[messagequeue.TopicIdentifier]consumer.ConsumerRelay),
 	}
 }
