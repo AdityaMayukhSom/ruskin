@@ -44,10 +44,11 @@ func (lp *LoadPartition) HandleSubscription(cnsmr *consumer.Consumer, topic *mes
 	relay, found := lp.relays[topic]
 	if !found {
 		relay = consumer.NewWSConsumerRelay(topic)
-		// no idea if we need to use mutex for synchronization
+		// TODO: no idea if we need to use mutex for synchronization
 		lp.relays[topic] = relay
 	}
-	relay.AddConsumer(cnsmr)
+	// addition of that consumer can be done in another go routine
+	go relay.AddConsumer(cnsmr)
 }
 
 func (lp *LoadPartition) Start() {
