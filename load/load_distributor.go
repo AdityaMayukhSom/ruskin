@@ -9,12 +9,13 @@ import (
 
 // Making a map of TopicId and LoadPartition
 // The map values have to be mapped to LoadPartition uid(will implement later)
-var TopicToPartitionMap map[string]*LoadPartition
+// var TopicToPartitionMap map[string]*LoadPartition
 
 type LoadDistributor struct {
-	PartitionsCount int
-	Partitions      []LoadPartition
-	mutex           sync.RWMutex
+	PartitionsCount     int
+	Partitions          []LoadPartition
+	mutex               sync.RWMutex
+	TopicToPartitionMap map[string]*LoadPartition
 }
 
 /*Function to get partition and check if the load partition is present or not if
@@ -22,17 +23,19 @@ its present it returns the load partition else it returns after creating a new l
 
 func (ld *LoadDistributor) GetPartition(topic string) *LoadPartition {
 
-	ld.mutex.Lock()
-	defer ld.mutex.Unlock()
+	// ld.mutex.Lock()
+	// defer ld.mutex.Unlock()
 
 	//Checking if loadPartition exist in the map
-	if partition, exist := TopicToPartitionMap[topic]; exist {
+	if partition, exist := ld.TopicToPartitionMap[topic]; exist {
 		return partition
 	}
 
 	/*If the load partition is not present in the map then create a new load partition
 	using the load partition factory and then use that factory using the config and then
 	producing the channels*/
+
+	ld.mutex.RLock()
 
 	//add the desired config to the partition
 	config := LoadPartitionFactoryConfig{}
@@ -46,11 +49,14 @@ func (ld *LoadDistributor) GetPartition(topic string) *LoadPartition {
 	newPartition := factory.Produce(topicChannel, consumerChannel)
 
 	//Adding the partition into the map and then returning the new partition
-	TopicToPartitionMap[topic] = newPartition
+	ld.TopicToPartitionMap[topic] = newPartition
+
+	defer ld.mutex.RUnlock()
+
 	return newPartition
 }
 
-func (ld *LoadDistributor) Start() {
+func (ld *LoadDistributor) Start(chans []chan string) {
 	agg := make(chan string)
 	for _, ch := range chans {
 		go func(c chan string) {
@@ -61,7 +67,7 @@ func (ld *LoadDistributor) Start() {
 	}
 
 	select {
-	case msg <- agg:
+	case msg := <-agg:
 		fmt.Println("received ", msg)
 	}
 }
