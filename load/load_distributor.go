@@ -13,47 +13,53 @@ import (
 
 type LoadDistributor struct {
 	PartitionsCount     int
-	Partitions          []LoadPartition
-	mutex               sync.RWMutex
+	mutex               sync.RWMutex //TODO: The mutex name should be changed
 	TopicToPartitionMap map[string]*LoadPartition
 }
 
-/*Function to get partition and check if the load partition is present or not if
-its present it returns the load partition else it returns after creating a new load partition*/
-
+/*
+Function to get partition and check if the load partition is present
+or not if its present it returns the load partition else it returns
+after creating a new load partition.
+*/
 func (ld *LoadDistributor) GetPartition(topic string) *LoadPartition {
-
-	// ld.mutex.Lock()
-	// defer ld.mutex.Unlock()
-
-	//Checking if loadPartition exist in the map
-	if partition, exist := ld.TopicToPartitionMap[topic]; exist {
-		return partition
-	}
-
-	/*If the load partition is not present in the map then create a new load partition
-	using the load partition factory and then use that factory using the config and then
-	producing the channels*/
-
 	ld.mutex.RLock()
 
-	//add the desired config to the partition
-	config := LoadPartitionFactoryConfig{}
+	//Checking if loadPartition exist in the map
+	partition, exist := ld.TopicToPartitionMap[topic]
 
-	//creating channels for load partition
-	topicChannel := make(chan string)
-	consumerChannel := make(chan consumer.Consumer)
+	ld.mutex.RUnlock()
 
-	//creating a new load partition using load partiotion factory
-	factory := NewLoadPartitionFactory(&config)
-	newPartition := factory.Produce(topicChannel, consumerChannel)
+	if !exist {
+		/*If the load partition is not present in the map then create a new load partition
+		using the load partition factory and then use that factory using the config and then
+		producing the channels*/
 
-	//Adding the partition into the map and then returning the new partition
-	ld.TopicToPartitionMap[topic] = newPartition
+		//Adding the partition into the map and then returning the new partition
 
-	defer ld.mutex.RUnlock()
+		ld.mutex.Lock()
+		existingPartition, exist := ld.TopicToPartitionMap[topic]
+		if !exist {
+			//add the desired config to the partition
+			config := LoadPartitionFactoryConfig{}
 
-	return newPartition
+			//creating channels for load partition
+			topicChannel := make(chan string)
+			consumerChannel := make(chan consumer.Consumer)
+
+			//creating a new load partition using load partiotion factory
+			factory := NewLoadPartitionFactory(&config)
+			partition = factory.Produce(topicChannel, consumerChannel)
+
+			ld.TopicToPartitionMap[topic] = partition
+		} else {
+			partition = existingPartition
+		}
+
+		ld.mutex.Unlock()
+	}
+
+	return partition
 }
 
 func (ld *LoadDistributor) Start(chans []chan string) {
