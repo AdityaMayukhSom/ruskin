@@ -18,6 +18,14 @@ type WSConsumerProxy struct {
 	connectionChannel chan<- *websocket.Conn
 }
 
+func NewWSConsumerProxy(listenAddrs []string, connectionChannel chan<- *websocket.Conn) *WSConsumerProxy {
+	return &WSConsumerProxy{
+		// TODO: handle consumers at multiple listen addrs too
+		listenAddr:        listenAddrs[0],
+		connectionChannel: connectionChannel,
+	}
+}
+
 func (wscp *WSConsumerProxy) socketHandler(w http.ResponseWriter, r *http.Request) {
 	// Upgrade our raw HTTP connection to a websocket based one
 	conn, err := upgrader.Upgrade(w, r, nil)
