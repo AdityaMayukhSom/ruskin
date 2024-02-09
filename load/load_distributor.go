@@ -8,13 +8,19 @@ import (
 )
 
 // Making a map of TopicId and LoadPartition
-// The map values have to be mapped to LoadPartition uid(will implement later)
+// The map values have to be mapped to LoadPartition uuid(will implement later)
 // var TopicToPartitionMap map[string]*LoadPartition
 
 type LoadDistributor struct {
-	PartitionsCount     int
-	mutex               sync.RWMutex //TODO: The mutex name should be changed
+	PartitionsCount int
+
+	mutex sync.RWMutex
+
 	TopicToPartitionMap map[string]*LoadPartition
+}
+
+func NewLoadDistributor() *LoadDistributor {
+	return &LoadDistributor{}
 }
 
 /*

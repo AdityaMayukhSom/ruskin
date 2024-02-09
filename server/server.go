@@ -1,105 +1,73 @@
 package server
 
 import (
-	"fmt"
+	"log/slog"
 
 	"github.com/AdityaMayukhSom/ruskin/consumer"
 	"github.com/AdityaMayukhSom/ruskin/load"
 	"github.com/AdityaMayukhSom/ruskin/producer"
-	//transport "github.com/AdityaMayukhSom/ruskin/transport"
+	"github.com/gorilla/websocket"
 )
-
-type ServerConfig struct {
-	//ProducerAddr string
-	// ConsumerAddr string
-	// Components   []Component
-	// StoreFactory StoreFactory
-}
 
 type Server struct {
 	// We must use two mutex to synchronise the creation of new topic store.
-	//*ServerConfig
+	ProducerAddrs []string
+	ConsumerAddrs []string
 
-	// producerHandlers     []transport.ProducerHandler
-	// subscriptionHandlers []transport.SubscriptionHandler
-	// streamProcessors     []transport.StreamProcessor
-
-	// // consumeChannel will be used to push the topicname to the client handler
-	// // for spawning appropriate client relay
-	// consumeChannel chan<- *store.Store
-
-	// // When we are willing to shutdown the server gracefully,
-	// // we need to signal this channel or close it.
-	// quitChannel chan struct{}
-
-	// components   []Component // Components running in the server
-	// storeFactory StoreFactory
-
-	loadDistributor *load.LoadDistributor
-	proxyConsumer   *consumer.ConsumerProxy
+	consumerProxy   consumer.ConsumerProxy
+	loadDistributor load.LoadDistributor
 	producerBroker  *producer.ProducerBroker
+
+	// When we are willing to shutdown the server gracefully,
+	// we need to signal this channel or close it.
+	quitChannel chan struct{}
 }
 
-// func NewServer(config *ServerConfig) (*Server, error) {
-// 	// a channel shared between producers and the server
-// 	// where producers push messages and server adds the message into
-// 	// their respective topic stores
-// 	// var produceChannel = make(chan transport.Message)
+type ServerOption func(*Server)
 
-// 	// server := &Server{
-// 	// 	ServerConfig: config,
-// 	// 	topicStores:  make(map[string]store.Store),
-
-// 	// 	producerHandlers: []transport.ProducerHandler{
-// 	// 		transport.NewHTTPProducerHandler(
-// 	// 			config.ProducerAddr,
-// 	// 			produceChannel,
-// 	// 		),
-// 	// 	},
-// 	// 	produceChannel: produceChannel,
-
-// 	// 	// consumers: []transport.Consumer{
-// 	// 	// 	transport.NewWSConsumer(
-// 	// 	// 		config.ConsumerAddr,
-// 	// 	// 	),
-// 	// 	// },
-
-// 	// 	quitChannel: make(chan struct{}),
-// 	// }
-
-// 	server := &Server{
-// 		ServerConfig: config,
-// 		Components: []Component{
-// 			NewLoadDistributor(),
-// 			NewProducerBroker(),
-// 			NewConsumerProxy(),
-// 		},
-// 	}
-
-// 	serverconf := &ServerConfig{
-// 		StoreFactory: store.NewMemoryStoreFactory(nil),
-// 	}
-
-// 	server, err := NewServer(serverconf)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	return server, nil
-// }
-
-func NewServer() *Server {
-
-	return &Server{}
+// will update the port at 3000 only if atleast one port it given,
+// else will keep on running at 3000 if no addr is passed.
+func WithProducerAddr(producerAddrs ...string) ServerOption {
+	return func(server *Server) {
+		if len(producerAddrs) > 0 {
+			server.ProducerAddrs = producerAddrs
+		}
+	}
 }
 
-// func (s *Server) notifySubscribers(topicName string) error {
+// will update the port at 4000 only if atleast one port it given,
+// else will keep on running at 4000 if no addr is passed.
+func WithConsumerAddr(consumerAddrs ...string) ServerOption {
+	return func(server *Server) {
+		server.ConsumerAddrs = consumerAddrs
+	}
+}
 
-// 	return nil
-// }
+func NewServer(serverOpts ...ServerOption) (*Server, error) {
+	// a channel shared between producers and the server where producers push
+	// messages and server adds the message into their respective topic stores
 
-// // Registers producers and consumers associated with the server and
-// // starts publishing messages to topics.
+	server := &Server{
+		ProducerAddrs: []string{":3000"},
+		ConsumerAddrs: []string{":4000"},
+		quitChannel:   make(chan struct{}),
+	}
+	for _, opt := range serverOpts {
+		opt(server)
+	}
+
+	consumerChannel := make(chan *websocket.Conn)
+
+	server.loadDistributor = load.NewLoadDistributor(consumerChannel)
+	server.producerBroker = producer.NewProducerBroker(&server.loadDistributor)
+
+	server.consumerProxy = consumer.NewWSConsumerProxy(server.ConsumerAddrs, consumerChannel)
+
+	return server, nil
+}
+
+// Registers producers and consumers associated with the server and
+// starts publishing messages to topics.
 // func (s *Server) Start() error {
 // 	for _, producerHandler := range s.producerHandlers {
 // 		go func(ph transport.ProducerHandler) {
@@ -152,23 +120,18 @@ func NewServer() *Server {
 // 	}
 // }
 
-func (s *Server) start() error {
-	// Initialize components
-	s.loadDistributor = NewLoadDistributor() //TODO: have to write each of them
-	s.proxyConsumer = NewProxyConsumer()
-	s.producerBroker = NewProducerBroker()
-
+func (s *Server) Start() error {
 	// Start components
 	if err := s.loadDistributor.Start(); err != nil {
 		return err
 	}
-	if err := s.proxyConsumer.Start(); err != nil {
+	if err := s.consumerProxy.Start(); err != nil {
 		return err
 	}
 	if err := s.producerBroker.Start(); err != nil {
 		return err
 	}
 
-	fmt.Println("Server started successfully")
+	slog.Info("🎉 Ruskin ready for writing... ✒️")
 	return nil
 }
