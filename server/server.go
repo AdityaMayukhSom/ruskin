@@ -1,120 +1,90 @@
 package server
 
 import (
-	"fmt"
 	"log/slog"
 
-	store "github.com/AdityaMayukhSom/ruskin/store"
-	transport "github.com/AdityaMayukhSom/ruskin/transport"
+	"github.com/AdityaMayukhSom/ruskin/consumer"
+	"github.com/AdityaMayukhSom/ruskin/load"
+	"github.com/AdityaMayukhSom/ruskin/producer"
 )
-
-type ServerConfig struct {
-	ProducerAddr string
-	ConsumerAddr string
-}
 
 type Server struct {
 	// We must use two mutex to synchronise the creation of new topic store.
-	*ServerConfig
+	ProducerAddrs []string
+	ConsumerAddrs []string
 
-	producerHandlers     []transport.ProducerHandler
-	subscriptionHandlers []transport.SubscriptionHandler
-	streamProcessors     []transport.StreamProcessor
-
-	// consumeChannel will be used to push the topicname to the client handler
-	// for spawning appropriate client relay
-	consumeChannel chan<- *store.Store
+	consumerProxy   consumer.ConsumerProxy
+	loadDistributor load.LoadDistributor
+	producerBroker  *producer.ProducerBroker
 
 	// When we are willing to shutdown the server gracefully,
 	// we need to signal this channel or close it.
 	quitChannel chan struct{}
 }
 
-func NewServer(config *ServerConfig) (*Server, error) {
-	// a channel shared between producers and the server
-	// where producers push messages and server adds the message into
-	// their respective topic stores
-	var produceChannel = make(chan transport.Message)
+type ServerOption func(*Server)
+
+// will update the port at 3000 only if atleast one port it given,
+// else will keep on running at 3000 if no addr is passed.
+func WithProducerAddr(producerAddrs ...string) ServerOption {
+	return func(server *Server) {
+		if len(producerAddrs) > 0 {
+			server.ProducerAddrs = producerAddrs
+		}
+	}
+}
+
+// will update the port at 4000 only if atleast one port it given,
+// else will keep on running at 4000 if no addr is passed.
+func WithConsumerAddr(consumerAddrs ...string) ServerOption {
+	return func(server *Server) {
+		server.ConsumerAddrs = consumerAddrs
+	}
+}
+
+func NewServer(serverOpts ...ServerOption) (*Server, error) {
+	// a channel shared between producers and the server where producers push
+	// messages and server adds the message into their respective topic stores
 
 	server := &Server{
-		ServerConfig: config,
-		topicStores:  make(map[string]store.Store),
-
-		producerHandlers: []transport.ProducerHandler{
-			transport.NewHTTPProducerHandler(
-				config.ProducerAddr,
-				produceChannel,
-			),
-		},
-		produceChannel: produceChannel,
-
-		// consumers: []transport.Consumer{
-		// 	transport.NewWSConsumer(
-		// 		config.ConsumerAddr,
-		// 	),
-		// },
-
-		quitChannel: make(chan struct{}),
+		ProducerAddrs: []string{":3000"},
+		ConsumerAddrs: []string{":4000"},
+		quitChannel:   make(chan struct{}),
 	}
+	for _, opt := range serverOpts {
+		opt(server)
+	}
+
+	consumerProxyLoadBalancerChannel := make(chan *consumer.Consumer)
+
+	server.loadDistributor = load.NewLoadDistributor(consumerProxyLoadBalancerChannel)
+	server.producerBroker = producer.NewProducerBroker(&server.loadDistributor)
+	server.consumerProxy = consumer.NewWSConsumerProxy(server.ConsumerAddrs, consumerProxyLoadBalancerChannel)
 
 	return server, nil
 }
 
-func (s *Server) notifySubscribers(topicName string) error {
-
-	return nil
-}
-
-// Registers producers and consumers associated with the server and
-// starts publishing messages to topics.
 func (s *Server) Start() error {
-	for _, producerHandler := range s.producerHandlers {
-		go func(ph transport.ProducerHandler) {
-			err := ph.Start()
-			if err != nil {
-				// if one producer is failing, doesn't mean whole
-				// server has to be stopped, so print and move on
-				fmt.Println(err)
-			}
-		}(producerHandler)
-	}
+	producerPaths := make(chan string)
 
-	for _, subscriptionHandler := range s.subscriptionHandlers {
-		go func(sh transport.SubscriptionHandler) {
-			err := sh.Start()
-			if err != nil {
-				// if one consumer is failing, doesn't mean whole
-				// server has to be stopped, so print and move on
-				fmt.Println(err)
-			}
-		}(subscriptionHandler)
+	slog.Info("load distributor starting")
+	if err := s.loadDistributor.Start(); err != nil {
+		return err
 	}
+	slog.Info("load distributor started")
 
-	for _, streamProcessor := range s.streamProcessors {
-		go func(sp transport.StreamProcessor) {
-			err := sp.Start()
-			if err != nil {
-				// if one consumer is failing, doesn't mean whole
-				// server has to be stopped, so print and move on
-				fmt.Println(err)
-			}
-		}(streamProcessor)
+	slog.Info("consumer proxy starting")
+	if err := s.consumerProxy.Start(); err != nil {
+		return err
 	}
+	slog.Info("consumer proxy started")
 
-	for {
-		select {
-		case <-s.quitChannel:
-			return nil
-		case message := <-s.produceChannel:
-			go func(s *Server, m transport.Message) {
-				offset, err := s.publishMessage(m)
-				if err != nil {
-					slog.Error("could not publish message=%s to topic=%s",
-						m.Topic, string(m.Data))
-					return
-				}
-				slog.Info("produced", "message", m, "offset", offset)
-			}(s, message)
-		}
+	slog.Info("producer broker starting")
+	if err := s.producerBroker.Start(producerPaths); err != nil {
+		return err
 	}
+	slog.Info("producer broker started")
+
+	slog.Info("🎉 Ruskin ready for writing... ✒️")
+	return nil
 }

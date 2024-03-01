@@ -6,7 +6,6 @@ import (
 	"time"
 
 	server "github.com/AdityaMayukhSom/ruskin/server"
-	store "github.com/AdityaMayukhSom/ruskin/store"
 
 	tint "github.com/lmittmann/tint"
 )
@@ -26,19 +25,26 @@ func main() {
 	// set global logger with custom options
 	slog.SetDefault(tintLogger)
 
-	serverconf := &server.ServerConfig{
-		ProducerAddr: ":3000",
-		ConsumerAddr: ":4000",
-		StoreFactory: store.NewMemoryStoreFactory(nil),
-	}
+	producerAddrOpt := server.WithProducerAddr(":4000")
+	consumerAddrOpt := server.WithConsumerAddr(":6900")
 
-	server, err := server.NewServer(serverconf)
+	server, err := server.NewServer(producerAddrOpt, consumerAddrOpt)
+	slog.Info("server created 🤖")
 	if err != nil {
 		slog.Error(err.Error())
 	}
 
+	// spawn components and start listeing for consumers and produvcers
 	err = server.Start()
+
 	if err != nil {
 		slog.Error(err.Error())
 	}
+
+	quitCh := make(chan bool)
+	quit := <-quitCh
+	if quit {
+		slog.Info("khatam, tata, bye bye...")
+	}
+
 }
