@@ -1,7 +1,7 @@
 package load
 
 import (
-	"fmt"
+	"log/slog"
 	"sync"
 
 	consumer "github.com/AdityaMayukhSom/ruskin/consumer"
@@ -17,10 +17,16 @@ type LoadDistributor struct {
 	mutex sync.RWMutex
 
 	TopicToPartitionMap map[string]*LoadPartition
+
+	messageChannel                   <-chan string
+	consumerProxyLoadBalancerChannel <-chan *consumer.Consumer
 }
 
-func NewLoadDistributor() *LoadDistributor {
-	return &LoadDistributor{}
+func NewLoadDistributor(consumerProxyLoadBalancerChannel <-chan *consumer.Consumer) LoadDistributor {
+	return LoadDistributor{
+		consumerProxyLoadBalancerChannel: consumerProxyLoadBalancerChannel,
+		messageChannel:                   make(<-chan string),
+	}
 }
 
 /*
@@ -68,20 +74,30 @@ func (ld *LoadDistributor) GetPartition(topic string) *LoadPartition {
 	return partition
 }
 
-func (ld *LoadDistributor) Start(chans ...chan string) error {
-	agg := make(chan string)
-	for _, ch := range chans {
-		go func(c chan string) {
-			for msg := range c {
-				agg <- msg
-			}
-		}(ch)
+func (ld *LoadDistributor) waitForConsumer() {
+	for consumer := range ld.consumerProxyLoadBalancerChannel {
+		slog.Info("new consumer", "topic", consumer.Topic)
 	}
+}
 
-	select {
-	case msg := <-agg:
-		fmt.Println("received ", msg)
+func (ld *LoadDistributor) waitForMessage() {
+	for msg := range ld.messageChannel {
+		slog.Info("new message", "message", msg)
 	}
+}
 
+func (ld *LoadDistributor) Start() error {
+	// we need to run this function when a new load partition is spawned
+	// agg := make(chan string)
+	// for _, ch := range chans {
+	// 	go func(c chan string) {
+	// 		for msg := range c {
+	// 			agg <- msg
+	// 		}
+	// 	}(ch)
+	// }
+	// go ld.waitForMessage(agg)
+	go ld.waitForConsumer()
+	go ld.waitForMessage()
 	return nil
 }
