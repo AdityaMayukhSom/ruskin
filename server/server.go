@@ -58,7 +58,7 @@ func NewServer(serverOpts ...ServerOption) (*Server, error) {
 
 	consumerChannel := make(chan *websocket.Conn)
 
-	server.loadDistributor = load.NewLoadDistributor(consumerChannel)
+	server.loadDistributor = *load.NewLoadDistributor()
 	server.producerBroker = producer.NewProducerBroker(&server.loadDistributor)
 
 	server.consumerProxy = consumer.NewWSConsumerProxy(server.ConsumerAddrs, consumerChannel)
@@ -121,14 +121,18 @@ func NewServer(serverOpts ...ServerOption) (*Server, error) {
 // }
 
 func (s *Server) Start() error {
+
+	consumerPaths := make(chan string)
 	// Start components
-	if err := s.loadDistributor.Start(); err != nil {
+	if err := s.loadDistributor.Start(consumerPaths); err != nil {
 		return err
 	}
 	if err := s.consumerProxy.Start(); err != nil {
 		return err
 	}
-	if err := s.producerBroker.Start(); err != nil {
+
+	producerPaths := make(chan string)
+	if err := s.producerBroker.Start(producerPaths); err != nil {
 		return err
 	}
 
