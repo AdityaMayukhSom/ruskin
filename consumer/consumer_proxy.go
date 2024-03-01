@@ -3,7 +3,9 @@ package consumer
 import (
 	"log/slog"
 	"net/http"
+	"strings"
 
+	"github.com/AdityaMayukhSom/ruskin/messagequeue"
 	"github.com/gorilla/websocket"
 )
 
@@ -14,19 +16,19 @@ type ConsumerProxy interface {
 }
 
 type WSConsumerProxy struct {
-	listenAddr        string
-	connectionChannel chan<- *websocket.Conn
+	listenAddr                       string
+	consumerProxyLoadBalancerChannel chan<- *Consumer
 }
 
-func NewWSConsumerProxy(listenAddrs []string, connectionChannel chan<- *websocket.Conn) *WSConsumerProxy {
+func NewWSConsumerProxy(listenAddrs []string, consumerProxyLoadBalancerChannel chan<- *Consumer) *WSConsumerProxy {
 	return &WSConsumerProxy{
 		// TODO: handle consumers at multiple listen addrs too
-		listenAddr:        listenAddrs[0],
-		connectionChannel: connectionChannel,
+		listenAddr:                       listenAddrs[0],
+		consumerProxyLoadBalancerChannel: consumerProxyLoadBalancerChannel,
 	}
 }
 
-func (wscp *WSConsumerProxy) socketHandler(w http.ResponseWriter, r *http.Request) {
+func (wscp *WSConsumerProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Upgrade our raw HTTP connection to a websocket based one
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -34,16 +36,21 @@ func (wscp *WSConsumerProxy) socketHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	wscp.connectionChannel <- conn
-}
+	path := strings.TrimPrefix(r.URL.Path, "/")
+	parts := strings.Split(path, "/")
+	// TODO: check if parts[0] is consume and parts[1] is topic name
 
-func (wscp *WSConsumerProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	go wscp.socketHandler(w, r)
+	// puts the connection inside consumer channel
+	wscp.consumerProxyLoadBalancerChannel <- &Consumer{
+		Conn:  conn,
+		Topic: messagequeue.TopicIdentifier(parts[1]),
+	}
 }
 
 func (wscp *WSConsumerProxy) Start() error {
 	slog.Info("web socket consumer proxy started", "port", wscp.listenAddr)
 
 	// http.ListenAndServe is a blocking method unless there is an error
-	return http.ListenAndServe(wscp.listenAddr, wscp)
+	go http.ListenAndServe(wscp.listenAddr, wscp)
+	return nil
 }
