@@ -68,7 +68,7 @@ func (ld *LoadDistributor) GetPartition(topic string) *LoadPartition {
 	return partition
 }
 
-func (ld *LoadDistributor) Start(chans []chan string) {
+func (ld *LoadDistributor) Start(chans ...chan string) error {
 	agg := make(chan string)
 	for _, ch := range chans {
 		go func(c chan string) {
@@ -82,4 +82,6 @@ func (ld *LoadDistributor) Start(chans []chan string) {
 	case msg := <-agg:
 		fmt.Println("received ", msg)
 	}
+
+	return nil
 }
