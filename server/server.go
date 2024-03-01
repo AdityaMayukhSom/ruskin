@@ -6,7 +6,6 @@ import (
 	"github.com/AdityaMayukhSom/ruskin/consumer"
 	"github.com/AdityaMayukhSom/ruskin/load"
 	"github.com/AdityaMayukhSom/ruskin/producer"
-	"github.com/gorilla/websocket"
 )
 
 type Server struct {
@@ -56,85 +55,35 @@ func NewServer(serverOpts ...ServerOption) (*Server, error) {
 		opt(server)
 	}
 
-	consumerChannel := make(chan *websocket.Conn)
+	consumerProxyLoadBalancerChannel := make(chan *consumer.Consumer)
 
-	server.loadDistributor = *load.NewLoadDistributor()
+	server.loadDistributor = load.NewLoadDistributor(consumerProxyLoadBalancerChannel)
 	server.producerBroker = producer.NewProducerBroker(&server.loadDistributor)
-
-	server.consumerProxy = consumer.NewWSConsumerProxy(server.ConsumerAddrs, consumerChannel)
+	server.consumerProxy = consumer.NewWSConsumerProxy(server.ConsumerAddrs, consumerProxyLoadBalancerChannel)
 
 	return server, nil
 }
 
-// Registers producers and consumers associated with the server and
-// starts publishing messages to topics.
-// func (s *Server) Start() error {
-// 	for _, producerHandler := range s.producerHandlers {
-// 		go func(ph transport.ProducerHandler) {
-// 			err := ph.Start()
-// 			if err != nil {
-// 				// if one producer is failing, doesn't mean whole
-// 				// server has to be stopped, so print and move on
-// 				fmt.Println(err)
-// 			}
-// 		}(producerHandler)
-// 	}
-
-// 	for _, subscriptionHandler := range s.subscriptionHandlers {
-// 		go func(sh transport.SubscriptionHandler) {
-// 			err := sh.Start()
-// 			if err != nil {
-// 				// if one consumer is failing, doesn't mean whole
-// 				// server has to be stopped, so print and move on
-// 				fmt.Println(err)
-// 			}
-// 		}(subscriptionHandler)
-// 	}
-
-// 	for _, streamProcessor := range s.streamProcessors {
-// 		go func(sp transport.StreamProcessor) {
-// 			err := sp.Start()
-// 			if err != nil {
-// 				// if one consumer is failing, doesn't mean whole
-// 				// server has to be stopped, so print and move on
-// 				fmt.Println(err)
-// 			}
-// 		}(streamProcessor)
-// 	}
-
-// 	for {
-// 		select {
-// 		case <-s.quitChannel:
-// 			return nil
-// 		case message := <-s.produceChannel:
-// 			go func(s *Server, m transport.Message) {
-// 				offset, err := s.publishMessage(m)
-// 				if err != nil {
-// 					slog.Error("could not publish message=%s to topic=%s",
-// 						m.Topic, string(m.Data))
-// 					return
-// 				}
-// 				slog.Info("produced", "message", m, "offset", offset)
-// 			}(s, message)
-// 		}
-// 	}
-// }
-
 func (s *Server) Start() error {
+	producerPaths := make(chan string)
 
-	consumerPaths := make(chan string)
-	// Start components
-	if err := s.loadDistributor.Start(consumerPaths); err != nil {
+	slog.Info("load distributor starting")
+	if err := s.loadDistributor.Start(); err != nil {
 		return err
 	}
+	slog.Info("load distributor started")
+
+	slog.Info("consumer proxy starting")
 	if err := s.consumerProxy.Start(); err != nil {
 		return err
 	}
+	slog.Info("consumer proxy started")
 
-	producerPaths := make(chan string)
+	slog.Info("producer broker starting")
 	if err := s.producerBroker.Start(producerPaths); err != nil {
 		return err
 	}
+	slog.Info("producer broker started")
 
 	slog.Info("🎉 Ruskin ready for writing... ✒️")
 	return nil
