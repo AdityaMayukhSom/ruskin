@@ -29,7 +29,7 @@ func (pb *ProducerBroker) addMessageToQueue(message transport.Message) {
 
 // here for testing purposes only one channel is passed
 // we have to actually pass multiple producers channels through it.
-func (pb *ProducerBroker) Start(producerChannels []chan<- string) {
+func (pb *ProducerBroker) Start(producerChannels ...chan<- string) error {
 
 	fmt.Println("Producer Broker is up")
 
@@ -48,6 +48,8 @@ func (pb *ProducerBroker) Start(producerChannels []chan<- string) {
 	for msg := range pb.messageChannel {
 		go pb.addMessageToQueue(msg)
 	}
+
+	return nil
 
 }
 
