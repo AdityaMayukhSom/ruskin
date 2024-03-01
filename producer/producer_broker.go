@@ -1,7 +1,7 @@
 package producer
 
 import (
-	"fmt"
+	"log/slog"
 
 	load "github.com/AdityaMayukhSom/ruskin/load"
 	mq "github.com/AdityaMayukhSom/ruskin/messagequeue"
@@ -31,23 +31,13 @@ func (pb *ProducerBroker) addMessageToQueue(message transport.Message) {
 // we have to actually pass multiple producers channels through it.
 func (pb *ProducerBroker) Start(producerChannels ...chan<- string) error {
 
-	fmt.Println("Producer Broker is up")
+	slog.Info("Producer Broker is up")
 
-	// Start a goroutine for each producer channel to produce messages to the message queue
-	// for _, ch := range producerChannels {
-	// 	go func(channel chan string) {
-	// 		for msg := range channel {
-	// 			err := messageQueue.Produce(msg)
-	// 			if err != nil {
-	// 				fmt.Println("Error producing message:", err)
-	// 			}
-	// 		}
-	// 	}(ch)
-	// }
-
-	for msg := range pb.messageChannel {
-		go pb.addMessageToQueue(msg)
-	}
+	go func(pb *ProducerBroker) {
+		for msg := range pb.messageChannel {
+			go pb.addMessageToQueue(msg)
+		}
+	}(pb)
 
 	return nil
 
