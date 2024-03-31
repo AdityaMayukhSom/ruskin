@@ -56,3 +56,7 @@ func (pb *ProducerBroker) AddProducer(producerChannels ...chan transport.Message
 	}
 	return nil
 }
+
+func (pb *ProducerBroker) SpawnProducerHandler(producerChannels ...chan transport.Message) *ProducerHandler {
+
+}
