@@ -29,9 +29,13 @@ func (pb *ProducerBroker) addMessageToQueue(message transport.Message) {
 
 // here for testing purposes only one channel is passed
 // we have to actually pass multiple producers channels through it.
-func (pb *ProducerBroker) Start(producerChannels ...chan<- string) error {
+func (pb *ProducerBroker) Start(listenAddr string, producerChannels ...chan<- string) error {
 
 	slog.Info("Producer Broker is up")
+
+	//for initial version a producer handler is spawned
+	//initially when a Producer Broker is created by the server
+	pb.SpawnProducerHandler(listenAddr, pb.messageChannel)
 
 	go func(pb *ProducerBroker) {
 		for msg := range pb.messageChannel {
@@ -58,7 +62,7 @@ func (pb *ProducerBroker) AddProducer(producerChannels ...chan transport.Message
 }
 
 func (pb *ProducerBroker) SpawnProducerHandler(listenAddr string, producerChannels ...chan<- transport.Message) *HTTPProducerHandler {
-	producerHandler := NewHTTPProducerHandler(listenAddr, pb.messageChannel)
+	producerHandler := NewHTTPProducerHandler(listenAddr, pb.messageChannel, pb)
 	go func() {
 		if err := producerHandler.Start(); err != nil {
 			slog.Error("Failed to start HTTP producer handler", "error", err)
