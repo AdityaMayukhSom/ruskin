@@ -47,8 +47,8 @@ func NewServer(serverOpts ...ServerOption) (*Server, error) {
 	// messages and server adds the message into their respective topic stores
 
 	server := &Server{
-		ProducerAddrs: []string{":3000"},
-		ConsumerAddrs: []string{":4000"},
+		ProducerAddrs: []string{":6000"},
+		ConsumerAddrs: []string{":6900"},
 		quitChannel:   make(chan struct{}),
 	}
 	for _, opt := range serverOpts {
@@ -80,7 +80,7 @@ func (s *Server) Start() error {
 	slog.Info("consumer proxy started")
 
 	slog.Info("producer broker starting")
-	if err := s.producerBroker.Start(producerPaths); err != nil {
+	if err := s.producerBroker.Start(s.ProducerAddrs[0], producerPaths); err != nil {
 		return err
 	}
 	slog.Info("producer broker started")
