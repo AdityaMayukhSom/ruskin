@@ -57,6 +57,12 @@ func (pb *ProducerBroker) AddProducer(producerChannels ...chan transport.Message
 	return nil
 }
 
-func (pb *ProducerBroker) SpawnProducerHandler(producerChannels ...chan transport.Message) *ProducerHandler {
-
+func (pb *ProducerBroker) SpawnProducerHandler(listenAddr string, producerChannels ...chan<- transport.Message) *HTTPProducerHandler {
+	producerHandler := NewHTTPProducerHandler(listenAddr, pb.messageChannel)
+	go func() {
+		if err := producerHandler.Start(); err != nil {
+			slog.Error("Failed to start HTTP producer handler", "error", err)
+		}
+	}()
+	return producerHandler
 }
