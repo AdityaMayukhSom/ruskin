@@ -1,5 +1,8 @@
 package messagequeue
 
+type MemoryStoreFactoryConfig struct {
+}
+
 type MemoryStoreFactory struct {
 	*StoreFactoryConfig
 }
@@ -10,6 +13,8 @@ func NewMemoryStoreFactory(config *StoreFactoryConfig) *MemoryStoreFactory {
 	}
 }
 
-func (m *MemoryStoreFactory) Produce(topicName string) Store {
+func (msf *MemoryStoreFactory) Produce(topicName string) Store {
+
 	return NewMemoryStore(topicName)
+
 }
