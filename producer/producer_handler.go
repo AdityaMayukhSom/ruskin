@@ -17,12 +17,14 @@ type ProducerHandler interface {
 type HTTPProducerHandler struct {
 	listenAddr     string
 	produceChannel chan<- transport.Message
+	// producerBroker *ProducerBroker
 }
 
-func NewHTTPProducerHandler(listenAddr string, produceChannel chan<- transport.Message) *HTTPProducerHandler {
+func NewHTTPProducerHandler(listenAddr string, produceChannel chan<- transport.Message, producerBroker *ProducerBroker) *HTTPProducerHandler {
 	return &HTTPProducerHandler{
 		listenAddr:     listenAddr,
 		produceChannel: produceChannel,
+		// producerBroker: producerBroker,
 	}
 }
 
