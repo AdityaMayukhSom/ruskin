@@ -25,7 +25,7 @@ func main() {
 	// set global logger with custom options
 	slog.SetDefault(tintLogger)
 
-	producerAddrOpt := server.WithProducerAddr(":4000")
+	producerAddrOpt := server.WithProducerAddr(":6000")
 	consumerAddrOpt := server.WithConsumerAddr(":6900")
 
 	server, err := server.NewServer(producerAddrOpt, consumerAddrOpt)
