@@ -6,7 +6,7 @@ WORKDIR /usr/src/ruskin
 
 COPY . .
 
-RUN go build -o bin/gstream
+RUN go build -o ./bin/ruskin
 
 FROM scratch 
 COPY --from=builder /usr/src/ruskin .
