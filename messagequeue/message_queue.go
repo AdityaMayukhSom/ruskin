@@ -9,6 +9,14 @@ import (
 	transport "github.com/AdityaMayukhSom/ruskin/transport"
 )
 
+type MessageQueueConfig struct {
+	// stores the maximum number of topics which can be included in one message queue
+	topicThreshold int
+
+	// Factory to produce new stores
+	factory StoreFactory
+}
+
 type MessageQueue struct {
 	*MessageQueueConfig
 

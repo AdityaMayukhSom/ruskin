@@ -8,23 +8,40 @@ import (
 	transport "github.com/AdityaMayukhSom/ruskin/transport"
 )
 
+type ProducerBrokerIdentifier *ProducerBroker
+
 type ProducerBroker struct {
 	// later we can use multiple channels and distribute the load here too
 	messageChannel  chan transport.Message
 	loadDistributor *load.LoadDistributor
-	topicQueueMap   map[mq.TopicIdentifier]mq.MessageQueue
+	topicQueueMap   map[mq.TopicIdentifier]*mq.MessageQueue
 }
 
 func NewProducerBroker(loadDistributor *load.LoadDistributor) *ProducerBroker {
 	return &ProducerBroker{
 		messageChannel:  make(chan transport.Message),
 		loadDistributor: loadDistributor,
-		topicQueueMap:   make(map[mq.TopicIdentifier]mq.MessageQueue),
+		topicQueueMap:   make(map[mq.TopicIdentifier]*mq.MessageQueue),
 	}
 }
 
 func (pb *ProducerBroker) addMessageToQueue(message transport.Message) {
+	ti := mq.TopicIdentifier(message.Topic)
 
+	queue, found := pb.topicQueueMap[ti]
+
+	if !found {
+
+	}
+
+	store, err := queue.GetStore(message.Topic)
+
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
+
+	store.Insert(message.Data)
 }
 
 // here for testing purposes only one channel is passed
@@ -33,8 +50,8 @@ func (pb *ProducerBroker) Start(listenAddr string, producerChannels ...chan<- st
 
 	slog.Info("Producer Broker is up")
 
-	//for initial version a producer handler is spawned
-	//initially when a Producer Broker is created by the server
+	// for initial version a producer handler is spawned
+	// initially when a Producer Broker is created by the server
 	pb.SpawnProducerHandler(listenAddr, pb.messageChannel)
 
 	go func(pb *ProducerBroker) {
