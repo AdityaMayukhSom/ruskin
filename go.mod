@@ -1,6 +1,6 @@
 module github.com/AdityaMayukhSom/ruskin
 
-go 1.21.5
+go 1.22.3
 
 require (
 	github.com/deckarep/golang-set/v2 v2.6.0
