@@ -36,13 +36,25 @@ type LinkedListMessageQueuePool struct {
 }
 
 func (mqp *LinkedListMessageQueuePool) Get() (*MessageQueue, error) {
-	if mqp.head == nil {
-		// create a new empty MessageQueue and add that to the pool and
-		// then return the pointer to the newly created MessageQueue
 
+	// create a new empty MessageQueue and add that to the pool and
+	// then return the pointer to the newly created MessageQueue
+	if mqp.head == nil {
+		NewMessageQueue := &MessageQueue{}
+		mqp.Add(NewMessageQueue)
+		return NewMessageQueue, nil
 	}
 
-	return nil, nil
+	// Get the first message queue in the pool
+	mq := mqp.head.mq
+
+	if mqp.head.next != nil {
+		mqp.head = mqp.head.next
+		// Remove the first message queue from the pool
+		mqp.length--
+	}
+
+	return mq, nil
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -52,11 +64,24 @@ func (mqp *LinkedListMessageQueuePool) Get() (*MessageQueue, error) {
 // A new message queue is added to the pool each time this
 // method is invoked on an instance of message queue pool.
 func (mqp *LinkedListMessageQueuePool) Create() error {
+	NewMessageQueue := &MessageQueue{}
+	mqp.Add(NewMessageQueue)
 	return nil
 }
 
 func (mqp *LinkedListMessageQueuePool) Add(mq *MessageQueue) error {
 
+	newNode := &node{mq: mq}
+
+	if mqp.head == nil {
+		mqp.head = newNode
+		mqp.tail = newNode
+	} else {
+		mqp.tail.next = newNode
+		mqp.tail = newNode
+	}
+
+	mqp.length++
 	return nil
 }
 
@@ -85,7 +110,12 @@ func (mqp *LinkedListMessageQueuePool) Delete(mq *MessageQueue) error {
 			// The required message queue is deleted, so we can return early.
 			// If for most of the cases, the message queue is found near the
 			// head, early return can lead to significant performance boosts.
+			if tempNode.next == mqp.tail {
+				mqp.tail = tempNode
+			}
+
 			tempNode.next = tempNode.next.next
+			mqp.length--
 			return nil
 		}
 		tempNode = tempNode.next
