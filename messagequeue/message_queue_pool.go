@@ -29,28 +29,37 @@ type node struct {
 	next *node
 }
 
+type mLinkedListNode[T any] struct {
+	data *T
+	next *mLinkedListNode[T]
+}
+
 type LinkedListMessageQueuePool struct {
 	length int
-	head   *node
-	tail   *node
+	head   *mLinkedListNode[MessageQueueIdentifier]
+	tail   *mLinkedListNode[MessageQueueIdentifier]
 }
 
 func (mqp *LinkedListMessageQueuePool) Get() (*MessageQueue, error) {
-
 	// create a new empty MessageQueue and add that to the pool and
 	// then return the pointer to the newly created MessageQueue
 	if mqp.head == nil {
-		NewMessageQueue := &MessageQueue{}
-		mqp.Add(NewMessageQueue)
-		return NewMessageQueue, nil
+		conf := &MessageQueueConfig{}
+		newQueue, err := NewMessageQueue(conf)
+		if err != nil {
+			return nil, err
+		}
+		mqp.Add(newQueue)
+		mqp.length++
 	}
 
 	// Get the first message queue in the pool
-	mq := mqp.head.mq
+	mq := mqp.head.data
 
-	if mqp.head.next != nil {
+	if mqp.head.data.IsFull() {
+		// Remove the first message queue from the pool when the first queue is full. This keeps on returning
+		// the first queue unless the first queue is filled, reducing the total number of queues required.
 		mqp.head = mqp.head.next
-		// Remove the first message queue from the pool
 		mqp.length--
 	}
 
