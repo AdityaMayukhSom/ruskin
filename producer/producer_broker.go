@@ -31,7 +31,7 @@ func (pb *ProducerBroker) addMessageToQueue(message transport.Message) {
 	queue, found := pb.topicQueueMap[ti]
 
 	if !found {
-
+		return
 	}
 
 	store, err := queue.GetStore(message.Topic)
