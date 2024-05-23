@@ -2,6 +2,7 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
+  base: '/ruskin-docs/',
   title: "Ruskin Docs",
   description: "Ruskin is a modern distributed open source message queuing system built with Go. This website hosts the documentation for Ruskin.",
   lastUpdated: true,
