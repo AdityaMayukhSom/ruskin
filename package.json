@@ -1,0 +1,17 @@
+{
+  "name": "ruskin-docs",
+  "version": "1.0.0",
+  "description": "Ruskin is a modern distributed open source message queuing system built with Go. This website hosts the documentation for Ruskin.",
+  "main": "index.js",
+  "scripts": {
+    "docs:dev": "vitepress dev",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vitepress": "^1.2.2"
+  }
+}
