@@ -12,14 +12,17 @@ export default defineConfig({
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Examples', link: '/markdown-examples' }
+      // { text: 'Examples', link: '/markdown-examples' }
     ],
     sidebar: [
       {
-        text: 'Ruskin',
+        // text: 'Ruskin',
         items: [
           { text: 'Markdown Examples', link: '/markdown-examples' },
-          { text: 'Runtime API Examples', link: '/api-examples' }
+          { text: 'Runtime API Examples', link: '/api-examples' },
+          { text: 'Producer', link: '/producer' },
+          { text: 'Message Queue', link: '/message-queue' },
+          { text: 'Queue Identifier Map', link: '/queue-identifier-map' },
         ]
       }
     ],

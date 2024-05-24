@@ -1,5 +1,6 @@
 ---
 outline: deep
+layout: doc
 ---
 
 # Runtime API Examples
