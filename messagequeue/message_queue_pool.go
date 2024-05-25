@@ -29,20 +29,41 @@ type node struct {
 	next *node
 }
 
+type mLinkedListNode[T any] struct {
+	data *T
+	next *mLinkedListNode[T]
+}
+
 type LinkedListMessageQueuePool struct {
 	length int
-	head   *node
-	tail   *node
+	head   *mLinkedListNode[MessageQueueIdentifier]
+	tail   *mLinkedListNode[MessageQueueIdentifier]
 }
 
 func (mqp *LinkedListMessageQueuePool) Get() (*MessageQueue, error) {
+	// create a new empty MessageQueue and add that to the pool and
+	// then return the pointer to the newly created MessageQueue
 	if mqp.head == nil {
-		// create a new empty MessageQueue and add that to the pool and
-		// then return the pointer to the newly created MessageQueue
-
+		conf := &MessageQueueConfig{}
+		newQueue, err := NewMessageQueue(conf)
+		if err != nil {
+			return nil, err
+		}
+		mqp.Add(newQueue)
+		mqp.length++
 	}
 
-	return nil, nil
+	// Get the first message queue in the pool
+	mq := mqp.head.data
+
+	if mqp.head.data.IsFull() {
+		// Remove the first message queue from the pool when the first queue is full. This keeps on returning
+		// the first queue unless the first queue is filled, reducing the total number of queues required.
+		mqp.head = mqp.head.next
+		mqp.length--
+	}
+
+	return mq, nil
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -52,11 +73,24 @@ func (mqp *LinkedListMessageQueuePool) Get() (*MessageQueue, error) {
 // A new message queue is added to the pool each time this
 // method is invoked on an instance of message queue pool.
 func (mqp *LinkedListMessageQueuePool) Create() error {
+	NewMessageQueue := &MessageQueue{}
+	mqp.Add(NewMessageQueue)
 	return nil
 }
 
 func (mqp *LinkedListMessageQueuePool) Add(mq *MessageQueue) error {
 
+	newNode := &node{mq: mq}
+
+	if mqp.head == nil {
+		mqp.head = newNode
+		mqp.tail = newNode
+	} else {
+		mqp.tail.next = newNode
+		mqp.tail = newNode
+	}
+
+	mqp.length++
 	return nil
 }
 
@@ -85,7 +119,12 @@ func (mqp *LinkedListMessageQueuePool) Delete(mq *MessageQueue) error {
 			// The required message queue is deleted, so we can return early.
 			// If for most of the cases, the message queue is found near the
 			// head, early return can lead to significant performance boosts.
+			if tempNode.next == mqp.tail {
+				mqp.tail = tempNode
+			}
+
 			tempNode.next = tempNode.next.next
+			mqp.length--
 			return nil
 		}
 		tempNode = tempNode.next
