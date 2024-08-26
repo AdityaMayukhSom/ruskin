@@ -1,9 +1,9 @@
-# BUILD_FLAGS = 
-OUTPUT_FILE := ./bin/ruskin
+BUILD_FLAGS = -race
+OUTPUT_FILE = ./bin/ruskin
 
 build:
 	@echo "Building the source files"
-	go build -o $(OUTPUT_FILE)
+	CGO_ENABLED=1 go build $(BUILD_FLAGS) -o $(OUTPUT_FILE) .
 
 run: build
 	@echo "Starting Ruskin"
