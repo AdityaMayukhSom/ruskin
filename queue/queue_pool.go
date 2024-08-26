@@ -1,4 +1,4 @@
-package messagequeue
+package queue
 
 type MessageQueuePool interface {
 	// This guarantees to provide a new message queue whenever this method

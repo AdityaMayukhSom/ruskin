@@ -1,4 +1,4 @@
-package messagequeue
+package queue
 
 import (
 	"errors"
