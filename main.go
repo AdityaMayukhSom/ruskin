@@ -6,7 +6,6 @@ import (
 	"time"
 
 	server "github.com/AdityaMayukhSom/ruskin/server"
-
 	tint "github.com/lmittmann/tint"
 )
 
@@ -29,14 +28,13 @@ func main() {
 	consumerAddrOpt := server.WithConsumerAddr(":6900")
 
 	server, err := server.NewServer(producerAddrOpt, consumerAddrOpt)
-	slog.Info("server created 🤖")
 	if err != nil {
 		slog.Error(err.Error())
 	}
+	slog.Info("server created 🤖")
 
 	// spawn components and start listeing for consumers and produvcers
 	err = server.Start()
-
 	if err != nil {
 		slog.Error(err.Error())
 	}
