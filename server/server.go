@@ -38,7 +38,9 @@ func WithProducerAddr(producerAddrs ...string) ServerOption {
 // else will keep on running at 4000 if no addr is passed.
 func WithConsumerAddr(consumerAddrs ...string) ServerOption {
 	return func(server *Server) {
-		server.ConsumerAddrs = consumerAddrs
+		if len(consumerAddrs) > 0 {
+			server.ConsumerAddrs = consumerAddrs
+		}
 	}
 }
 
@@ -51,6 +53,7 @@ func NewServer(serverOpts ...ServerOption) (*Server, error) {
 		ConsumerAddrs: []string{":6900"},
 		quitChannel:   make(chan struct{}),
 	}
+
 	for _, opt := range serverOpts {
 		opt(server)
 	}
@@ -73,17 +76,17 @@ func (s *Server) Start() error {
 	}
 	slog.Info("load distributor started")
 
-	slog.Info("consumer proxy starting")
-	if err := s.consumerProxy.Start(); err != nil {
-		return err
-	}
-	slog.Info("consumer proxy started")
-
 	slog.Info("producer broker starting")
 	if err := s.producerBroker.Start(s.ProducerAddrs[0], producerPaths); err != nil {
 		return err
 	}
 	slog.Info("producer broker started")
+
+	slog.Info("consumer proxy starting")
+	if err := s.consumerProxy.Start(); err != nil {
+		return err
+	}
+	slog.Info("consumer proxy started")
 
 	slog.Info("🎉 Ruskin ready for writing... ✒️")
 	return nil
