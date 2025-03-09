@@ -1,6 +1,7 @@
 ---
-layout: doc
+title: Hola Amiga
 ---
+
 
 # Markdown Extension Examples
 

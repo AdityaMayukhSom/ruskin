@@ -1,0 +1,19 @@
+[project]
+name = "ruskin"
+version = "0.1.0"
+description = "A simple to setup message queue, written in Go."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Aditya Mayukh Som" }]
+maintainers = [{ name = "Aditya Mayukh Som" }]
+dependencies = ["mkdocs", "mkdocs-material"]
+requires-python = ">=3.12"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.setuptools]
+py-modules = []
+# package-dir = { "" = "docs" }

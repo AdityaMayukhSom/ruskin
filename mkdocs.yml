@@ -1,0 +1,14 @@
+site_name: Ruskin Documentation
+site_url: https://ruskin.devstream.in
+repo_name: AdityaMayukhSom/ruskin
+repo_url: https://github.com/AdityaMayukhSom/ruskin
+theme:
+  name: material
+  icon:
+    repo: fontawesome/brands/github
+  language: en
+  palette:
+    primary: teal
+  font:
+    text: Roboto
+    code: Roboto Mono
