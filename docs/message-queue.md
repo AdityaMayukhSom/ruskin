@@ -12,13 +12,13 @@ Once a connection is established between the producer broker and a remote machin
 
 ### Message Queue Structure
 
-- **Single Queue per Topic:** Each topic corresponds to a single message queue.
-- **Multiple Topics per Queue:** However, a single message queue can accommodate messages from multiple topics.
+   - **Single Queue per Topic:** Each topic corresponds to a single message queue.
+   - **Multiple Topics per Queue:** However, a single message queue can accommodate messages from multiple topics.
 
 ### Message Storage and Relay
 
-- **Message Storage:** Upon receipt, messages from producers are stored in the appropriate message queue based on their associated topic.
-- **Relay to Consumers:** Messages stored in the message queue are then relayed to consumers via the consumer channel.
+   - **Message Storage:** Upon receipt, messages from producers are stored in the appropriate message queue based on their associated topic.
+   - **Relay to Consumers:** Messages stored in the message queue are then relayed to consumers via the consumer channel.
 
 ## Process Flow
 

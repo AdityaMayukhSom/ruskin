@@ -1,0 +1,9 @@
+.md-main__inner {
+    margin-top: 0;
+}
+
+.md-content,
+.md-sidebar .md-sidebar__scrollwrap {
+    padding-top: 0.5rem;
+    padding-bottom: 4rem;
+}

@@ -1,14 +1,88 @@
 site_name: Ruskin Documentation
 site_url: https://ruskin.devstream.in
+site_author: Aditya Mayukh Som
 repo_name: AdityaMayukhSom/ruskin
 repo_url: https://github.com/AdityaMayukhSom/ruskin
+copyright: Copyright &copy; 2023 - 2025 Aditya Mayukh Som
 theme:
   name: material
+  language: en
+
+  features:
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.code.select
+    - content.footnote.tooltips
+    - content.tabs.link
+    - content.tooltips
+    # - header.autohide
+    # - navigation.expand
+    # - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    # - navigation.prune
+    # - navigation.sections
+    # - navigation.tabs
+    # - navigation.tabs.sticky
+    # - navigation.top
+    # - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+
   icon:
     repo: fontawesome/brands/github
-  language: en
+
   palette:
-    primary: teal
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: black
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
   font:
     text: Roboto
     code: Roboto Mono
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - pymdownx.highlight:
+      # linenums: true
+      # line_spans: __span
+      linenums_style: table
+      auto_title: true
+      # anchor_linenums: false
+      use_pygments: true
+      pygments_lang_class: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.critic
+  - pymdownx.blocks.caption
+  - pymdownx.betterem
+  - toc:
+      permalink: true
+
+extra_css:
+  - stylesheets/extra.css
