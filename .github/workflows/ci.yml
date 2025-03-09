@@ -14,15 +14,14 @@ jobs:
         run: |
           git config user.name "R2-D2 [bot]"
           git config user.email "artoo-detoo@devstream.in"
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV 
-      - uses: actions/cache@v4
-        with:
-          key: mkdocs-material-${{ env.cache_id }}
-          path: .cache 
-          restore-keys: |
-            mkdocs-material-
-      - run: pip install -r pyproject.toml
-      - run: mkdocs gh-deploy
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        wirh:
+          enable-cache: true
+          cache-dependency-glob: 'uv.lock'
+      - name: Set up Python
+        run: uv python install
+      - name: Install dependencies
+        run: uv sync --all-extras
+      - name: Push docs to gh-pages branch
+        run: uv run mkdocs gh-deploy

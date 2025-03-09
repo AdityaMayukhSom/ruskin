@@ -7,13 +7,14 @@ license = { file = "LICENSE" }
 authors = [{ name = "Aditya Mayukh Som" }]
 maintainers = [{ name = "Aditya Mayukh Som" }]
 dependencies = ["mkdocs", "mkdocs-material"]
-requires-python = ">=3.12"
+requires-python = "~=3.12"
 
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
+[tool.uv]
+required-version = "~=0.6.5"
 
 [tool.setuptools]
 py-modules = []
-# package-dir = { "" = "docs" }

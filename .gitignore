@@ -4,3 +4,4 @@ venv
 public
 site
 build
+*.egg-info
