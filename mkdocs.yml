@@ -7,7 +7,7 @@ copyright: Copyright &copy; 2023 - 2025 Aditya Mayukh Som
 theme:
   name: material
   language: en
-
+  logo: assets/logo.svg
   features:
     - content.action.edit
     - content.action.view
